@@ -289,7 +289,7 @@ def generate_pdf():
         
         # الشعار في أقصى اليسار
         if os.path.exists(logo_path):
-            pdf.image(logo_path, x=10, y=8, w=50)
+            pdf.image(logo_path, x=10, y=8, w=70)
         
         # معلومات الشركة في أقصى اليمين
         pdf.set_y(8)
