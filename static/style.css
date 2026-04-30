@@ -1,0 +1,345 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    display: flex;
+    gap: 24px;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* القسم الأيسر */
+.left-panel {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.left-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+.left-panel::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.left-panel::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 10px;
+}
+
+.panel-header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.panel-header h1 {
+    font-size: 24px;
+    color: #333;
+    font-weight: 700;
+}
+
+.version {
+    color: #667eea;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.form-section {
+    margin-bottom: 32px;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 16px;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #667eea;
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #667eea;
+    display: inline-block;
+}
+
+.financial-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.total-badge {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.total-badge span {
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.floating-label {
+    position: absolute;
+    left: 12px;
+    top: -10px;
+    background: white;
+    padding: 0 5px;
+    font-size: 12px;
+    color: #667eea;
+    font-weight: 500;
+    transition: all 0.2s;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.form-input {
+    width: 100%;
+    padding: 14px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    font-size: 14px;
+    transition: all 0.3s;
+    background: white;
+}
+
+/* تنسيق القوائم المنسدلة */
+.form-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667eea' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    cursor: pointer;
+}
+
+.form-select option {
+    padding: 10px;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-input:hover {
+    border-color: #667eea;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.checkbox-group input {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.checkbox-group label {
+    cursor: pointer;
+    color: #555;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.btn-add {
+    flex: 1;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn-add:hover {
+    transform: translateY(-2px);
+}
+
+.segment-item, .hotel-item {
+    background: #f0f0f0;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.btn-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #ff4757;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* القسم الأيمن */
+.right-panel {
+    flex: 1;
+    background: white;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid #667eea;
+}
+
+.airline-logo {
+    font-size: 24px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.ticket-id {
+    font-size: 12px;
+    color: #999;
+}
+
+.ticket-content {
+    min-height: 400px;
+}
+
+.ticket-field {
+    margin-bottom: 12px;
+    padding: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.ticket-label {
+    font-weight: 600;
+    color: #667eea;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.ticket-value {
+    font-size: 14px;
+    color: #333;
+    margin-top: 4px;
+}
+
+.section-divider {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 12px;
+    margin: 16px 0;
+}
+
+.section-title-ticket {
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 12px;
+    font-size: 16px;
+}
+
+.loading-message {
+    text-align: center;
+    color: #667eea;
+    padding: 40px;
+    font-size: 14px;
+}
+
+.ticket-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+    flex-wrap: wrap;
+}
+
+.btn-export, .btn-email {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-export {
+    background: #27ae60;
+    color: white;
+}
+
+.btn-export:hover {
+    background: #229954;
+    transform: translateY(-2px);
+}
+
+.btn-email {
+    background: #3498db;
+    color: white;
+}
+
+.btn-email:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+    
+    .left-panel, .right-panel {
+        max-height: none;
+    }
+}

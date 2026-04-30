@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Generator v1.0.0.4 | Airline Tickets</title>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='airplane.ico') }}" type="image/x-icon">
+    <link rel="stylesheet" href="static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <div class="panel-header">
+                <h1>✈️ Invoice Generator</h1>
+                <p class="version">v1.0.0.4</p>
+                {% if current_user.is_authenticated %}
+                <div style="margin-top: 12px; display: flex; justify-content: center; gap: 15px; align-items: center;">
+                    <span style="color: #667eea; font-size: 13px;">👤 {{ current_user.username }}</span>
+                    <a href="{{ url_for('logout') }}" style="background: #ff4757; color: white; padding: 5px 12px; border-radius: 20px; text-decoration: none; font-size: 12px; font-weight: 500;">🚪 تسجيل خروج</a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- القسم 1: INVOICE DETAILS -->
+            <div class="form-section">
+                <div class="section-title">📄 INVOICE DETAILS</div>
+                <div class="form-group">
+                    <label class="floating-label">Invoice Number</label>
+                    <input type="text" class="form-input" data-field="invoice_number" placeholder="e.g., INV_2024-001">
+                </div>
+                <div class="form-group">
+                    <label class="floating-label">Invoice Date</label>
+                    <input type="text" class="form-input" data-field="invoice_date" placeholder="e.g., MM/DD/YYYY">
+                </div>
+                <div class="form-group">
+                    <label class="floating-label">Date of Issue</label>
+                    <input type="text" class="form-input" data-field="date_supply" placeholder="e.g., MM/DD/YYYY">
+                </div>
+                <div class="form-group">
+                    <label class="floating-label">Project Manager Email</label>
+                    <input type="email" class="form-input" data-field="pm_email" placeholder="e.g., pm@company.com" value="paul.cook@kentplc.com">
+                </div>
+                
+                <!-- Approver - Dropdown List -->
+                <div class="form-group">
+                    <label class="floating-label">Approver</label>
+                    <select class="form-input form-select" data-field="approver">
+                        <option value="">-- Select Approver --</option>
+                        <option value="Paul cock">PAUL COOK</option>
+                        <option value="Joe golden">JOE GOLDEN</option>
+                    </select>
+                </div>
+                
+                <!-- Traveller Booker Email - Dropdown List -->
+                <div class="form-group">
+                    <label class="floating-label">Traveller Booker Email</label>
+                    <select class="form-input form-select" data-field="booker_email">
+                        <option value="">-- Select Email --</option>
+                        <option value="Vishal.Mendonsa@kentplc.com">Vishal.Mendonsa@kentplc.com</option>
+                        <option value="kumuda.chettiar@kentplc.com">kumuda.chettiar@kentplc.com</option>
+                        <option value="">None</option>
+                    </select>
+                </div>
+                
+                <!-- Booked By - Dropdown List -->
+                <div class="form-group">
+                    <label class="floating-label">Booked By</label>
+                    <select class="form-input form-select" data-field="booked_by">
+                        <option value="">-- Select Booked By --</option>
+                        <option value="Kumuda Chettiar">Kumuda Chettiar</option>
+                        <option value="Vishal Mendonsa">Vishal Mendonsa</option>
+                        <option value="NEMAT">NEMAT</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- القسم 2: PASSENGER & BOOKING -->
+            <div class="form-section">
+                <div class="section-title">👤 PASSENGER & BOOKING</div>
+                <div class="form-group">
+                    <label class="floating-label">Passenger Name</label>
+                    <input type="text" class="form-input" data-field="passenger_name" placeholder="e.g., Ahmed Al-Mansouri">
+                </div>
+                <div class="form-group">
+                    <label class="floating-label">Employee ID</label>
+                    <input type="text" class="form-input" data-field="employee_id" placeholder="e.g., EMP-12345">
+                </div>
+                
+                <!-- Business Unit - Dropdown List -->
+                <div class="form-group">
+                    <label class="floating-label">Business Unit</label>
+                    <select class="form-input form-select" data-field="business_unit">
+                        <option value="">-- Select Business Unit --</option>
+                        <option value="Kentech Gulf Holdings Limited Iraq Branch">Kentech Gulf Holdings Limited Iraq Branch</option>
+                        <option value="BGC-KIQ-KENTECH GULF HOLDINGS LIMITED IRAQ">BGC - KIQ-KENTECH GULF HOLDINGS LIMITED IRAQ</option>
+                        <option value="PETROCHINA_BGC-KIQ-KENTECH GULF HOLDINGS LIMITED IRAQ BRANCH">PETROCHINA_BGC-KIQ-KENTECH GULF HOLDINGS LIMITED IRAQ BRANCH</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="floating-label">Cost Center</label>
+                    <input type="text" class="form-input" data-field="cost_center" placeholder="e.g., CC-7890" value="1425">
+                </div>
+                
+                <!-- Trip Reason - Dropdown List -->
+                <div class="form-group">
+                    <label class="floating-label">Trip Reason</label>
+                    <input type="text" class="form-input" data-field="trip_reason" value="Rotation - Rotational">
+                </div>
+                
+                <div class="form-group">
+                    <label class="floating-label">Booking Number</label>
+                    <input type="text" class="form-input" data-field="booking_number" placeholder="e.g., BKG-2024-5678">
+                </div>
+            </div>
+
+            <!-- القسم 3: FINANCIALS -->
+            <div class="form-section">
+                <div class="financial-header">
+                    <div class="section-title">💰 FINANCIALS</div>
+                    <div class="total-badge">Total <span id="totalAmount">0</span> USD</div>
+                </div>
+                <div class="form-group">
+                    <label class="floating-label">Fare (Ex VAT)</label>
+                    <input type="number" class="form-input financial-input" data-field="fare" placeholder="e.g., 500">
+                </div>
+                <div class="form-group">
+                    <label class="floating-label">LSK Fee / Commission</label>
+                    <input type="number" class="form-input financial-input" data-field="lsk_fee" placeholder="e.g., 50">
+                </div>
+                <div class="form-group">
+                    <label class="floating-label">Base Fare</label>
+                    <input type="number" class="form-input financial-input" data-field="base_fare" placeholder="e.g., 450">
+                </div>
+                <div class="form-group">
+                    <label class="floating-label">Ticket Number</label>
+                    <input type="text" class="form-input" data-field="ticket_number" placeholder="e.g., 123-4567890">
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="exportExcel">
+                    <label for="exportExcel">Export as PDF/Excel</label>
+                </div>
+            </div>
+
+            <!-- أزرار إضافة الأقسام -->
+            <div class="action-buttons">
+                <button class="btn-add" id="addSegmentBtn">✈️ Add Flight Segment</button>
+                <button class="btn-add" id="addHotelBtn">🏨 Add Hotel Details</button>
+            </div>
+
+            <!-- أقسام ديناميكية -->
+            <div id="segmentsContainer"></div>
+            <div id="hotelContainer"></div>
+        </div>
+
+        <!-- القسم الأيمن: التذكرة -->
+        <div class="right-panel">
+            <div class="ticket-header">
+                <div class="airline-logo">✈️ AIRLINE TICKET</div>
+                <div class="ticket-id" id="ticketTicketNumber">TKT: ---</div>
+            </div>
+            
+            <div class="ticket-content" id="ticketContent">
+                <div class="loading-message">سوف تظهر المعلومات هنا فور إدخالها</div>
+            </div>
+
+            <!-- أزرار التصدير والإرسال -->
+            <div class="ticket-actions">
+                <button class="btn-export" id="exportPdfBtn">📄 Export as PDF</button>
+                <button class="btn-export" id="exportXmlBtn">📊 Export as Excel</button>
+                <button class="btn-email" id="sendEmailBtn">📧 Send to Client Email</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/script.js"></script>
+</body>
+</html>
