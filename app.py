@@ -321,25 +321,30 @@ def generate_pdf():
         pdf.cell(190, 6, txt="INVOICE DETAILS", ln=True, fill=True)
         
         pdf.set_font("Arial", size=8)
-        # صف 1
+        
+        # Invoice Number (سطر كامل)
         pdf.set_font("Arial", 'B', 8)
         pdf.cell(40, 5, txt="Invoice Number:", ln=0)
         pdf.set_font("Arial", size=8)
-        pdf.cell(55, 5, txt=str(data.get('invoice_number', '-'))[:25], ln=0)
+        pdf.cell(150, 5, txt=str(data.get('invoice_number', '-'))[:40], ln=1)
+        
+        # Invoice Date (سطر منفصل)
         pdf.set_font("Arial", 'B', 8)
         pdf.cell(40, 5, txt="Invoice Date:", ln=0)
         pdf.set_font("Arial", size=8)
-        pdf.cell(55, 5, txt=str(data.get('invoice_date', '-'))[:20], ln=1)
+        pdf.cell(150, 5, txt=str(data.get('invoice_date', '-'))[:20], ln=1)
         
-        # صف 2
+        # Date of Supply (سطر منفصل)
         pdf.set_font("Arial", 'B', 8)
         pdf.cell(40, 5, txt="Date of Supply:", ln=0)
         pdf.set_font("Arial", size=8)
-        pdf.cell(55, 5, txt=str(data.get('date_supply', '-'))[:20], ln=0)
+        pdf.cell(150, 5, txt=str(data.get('date_supply', '-'))[:20], ln=1)
+        
+        # Booked By (سطر منفصل)
         pdf.set_font("Arial", 'B', 8)
         pdf.cell(40, 5, txt="Booked By:", ln=0)
         pdf.set_font("Arial", size=8)
-        pdf.cell(55, 5, txt=str(data.get('booked_by', '-'))[:20], ln=1)
+        pdf.cell(150, 5, txt=str(data.get('booked_by', '-'))[:20], ln=1)
         
         # ========== PASSENGER & BOOKING ==========
         pdf.set_font("Arial", 'B', 10)
@@ -455,35 +460,51 @@ def generate_pdf():
             pdf.cell(190, 6, txt="HOTEL DETAILS", ln=True, fill=True)
             
             pdf.set_font("Arial", size=8)
-
-            # صف 1
-            pdf.set_font("Arial", 'B', 8)
-            pdf.cell(30, 5, txt="Hotel Name:", ln=0)
-            pdf.set_font("Arial", size=8)
-            pdf.cell(40, 5, txt=str(hotel.get('hotel_name', '-')), ln=0)
-            pdf.set_font("Arial", 'B', 8)
-            pdf.cell(25, 5, txt="Location:", ln=0)
-            pdf.set_font("Arial", size=8)
-            pdf.cell(40, 5, txt=str(hotel.get('location', '-')), ln=0)
-            pdf.set_font("Arial", 'B', 8)
-            pdf.cell(20, 5, txt="", ln=0)
-            pdf.set_font("Arial", size=8)
-            pdf.cell(35, 5, txt=str(), ln=1)
-            pdf.ln(5)
             
-            # صف 2
+            # حساب منتصف الصفحة
+            mid_x = 105
+            
+            # الجهة اليسار: Check In, Check Out, Nights (واحد فوق الثاني)
+            y_start = pdf.get_y()
+            
+            # Check In
+            pdf.set_y(y_start)
+            pdf.set_x(10)
             pdf.set_font("Arial", 'B', 8)
             pdf.cell(30, 5, txt="Check In:", ln=0)
             pdf.set_font("Arial", size=8)
-            pdf.cell(40, 5, txt=str(hotel.get('check_in', '-'))[:12], ln=0)
+            pdf.cell(40, 5, txt=str(hotel.get('check_in', '-'))[:12], ln=1)
+            
+            # Check Out
             pdf.set_font("Arial", 'B', 8)
-            pdf.cell(25, 5, txt="Check Out:", ln=0)
+            pdf.cell(30, 5, txt="Check Out:", ln=0)
             pdf.set_font("Arial", size=8)
-            pdf.cell(40, 5, txt=str(hotel.get('check_out', '-'))[:12], ln=0)
+            pdf.cell(40, 5, txt=str(hotel.get('check_out', '-'))[:12], ln=1)
+            
+            # Nights
             pdf.set_font("Arial", 'B', 8)
-            pdf.cell(20, 5, txt="Nights:", ln=0)
+            pdf.cell(30, 5, txt="Nights:", ln=0)
             pdf.set_font("Arial", size=8)
-            pdf.cell(35, 5, txt=str(hotel.get('nights', '-')), ln=1)
+            pdf.cell(40, 5, txt=str(hotel.get('nights', '-')), ln=1)
+            
+            # الجهة اليمين: Hotel Name, Location (واحد فوق الثاني) - نفس الموقع بالضبط
+            pdf.set_y(y_start)
+            pdf.set_x(mid_x)
+            pdf.set_font("Arial", 'B', 8)
+            pdf.cell(30, 5, txt="Hotel Name:", ln=0)
+            pdf.set_font("Arial", size=8)
+            # هنا بس غيرنا إلى multi_cell عشان النص الطويل
+            hotel_name_text = str(hotel.get('hotel_name', '-'))
+            pdf.multi_cell(50, 5, txt=hotel_name_text)
+            
+            pdf.set_y(pdf.get_y() + 2)
+            pdf.set_x(mid_x)
+            pdf.set_font("Arial", 'B', 8)
+            pdf.cell(30, 5, txt="Location:", ln=0)
+            pdf.set_font("Arial", size=8)
+            location_text = str(hotel.get('location', '-'))
+            pdf.multi_cell(50, 5, txt=location_text)
+            
             pdf.ln(5)
         
         # ========== النص الطويل (Beneficiary & Bank Details) في الوسط ==========
@@ -1209,4 +1230,5 @@ def generate_pdf_internal(data):
 
 if __name__ == '__main__':
     print("Server Starting.....")
-    serve(app, host='0.0.0.0', port=80)
+    # serve(app, host='0.0.0.0', port=80)
+    app.run(host='0.0.0.0', port=80)
