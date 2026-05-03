@@ -10,6 +10,7 @@ from waitress import serve
 import hashlib, sqlite3, os, tempfile, zipfile, io, traceback, re, smtplib, json
 
 JSON_DATA_FILE = 'data.json'
+
 def remove_json_file():
     print(str(datetime.now().hour), str(datetime.now().minute))
     if str(datetime.now().hour) == '14' and str(datetime.now().minute) == '00' or str(datetime.now().minute) == '0':
@@ -84,16 +85,16 @@ def init_db():
     )''')
     
     # حذف المستخدم القديم إذا وجد
-    c.execute("DELETE FROM users WHERE username = 'Ahmed Alnaemny'")
+    c.execute("DELETE FROM users WHERE username = 'Ahmed Alnaemmy'")
     
-    # إضافة المستخدم الجديد: Ahmed Alnaemny / London1234
+    # إضافة المستخدم الجديد: Ahmed Alnaemmy / London1234
     hashed_password = hashlib.sha256('London1234'.encode()).hexdigest()
     c.execute("INSERT INTO users (username, password) VALUES (?, ?)",
-              ('Ahmed Alnaemny', hashed_password))
+              ('Ahmed Alnaemmy', hashed_password))
     
     conn.commit()
     conn.close()
-    print("✅ User created: Ahmed Alnaemny / London1234")
+    print("✅ User created: Ahmed Alnaemmy / London1234")
 
 # فئة المستخدم
 class User(UserMixin):
@@ -133,6 +134,8 @@ def login():
     """صفحة تسجيل الدخول"""
     if current_user.is_authenticated:
         return redirect(url_for('index'))
+    if 0 == 1:
+        return render_template('sum.html')
     
     if request.method == 'POST':
         username = request.form.get('username')
@@ -297,7 +300,14 @@ def parse_trip_reason(trip_reason_value):
 @app.route('/')
 @login_required
 def index():
-    return render_template('index.html', user=current_user)
+    busy = True
+    if busy:
+        print('busy')
+        return render_template('sum.html')
+    else:
+        print('not busy')
+        return render_template('index.html', user=current_user)
+        
 
 @app.route('/generate_pdf', methods=['POST'])
 def generate_pdf():
@@ -1609,5 +1619,5 @@ def generate_pdf_internal(data):
 
 if __name__ == '__main__':
     print("Server Starting.....")
-    serve(app, host='0.0.0.0', port=80)
+    serve(app, host='0.0.0.0', port=80, threads=6)
     # app.run(host='0.0.0.0', port=80)
