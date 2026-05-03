@@ -300,13 +300,7 @@ def parse_trip_reason(trip_reason_value):
 @app.route('/')
 @login_required
 def index():
-    busy = True
-    if busy:
-        print('busy')
-        return render_template('sum.html')
-    else:
-        print('not busy')
-        return render_template('index.html', user=current_user)
+    return render_template('index.html', user=current_user)
         
 
 @app.route('/generate_pdf', methods=['POST'])
