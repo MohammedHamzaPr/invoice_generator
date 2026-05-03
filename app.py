@@ -134,7 +134,7 @@ def login():
     """صفحة تسجيل الدخول"""
     if current_user.is_authenticated:
         return redirect(url_for('index'))
-    if 0 == 0:
+    if 0 == 1:
         return render_template('sum.html')
     
     if request.method == 'POST':
