@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>الصيانة الدورية | قيد التطوير</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Tahoma', 'Geneva', 'Verdana', sans-serif;
+            background: linear-gradient(145deg, #0a2f44 0%, #0a1a2e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            direction: rtl;
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        /* خلفية توحي بالعمل التطويري */
+        body::before {
+            content: "⚙️ 🔧 🛠️";
+            font-size: 220px;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            opacity: 0.03;
+            white-space: pre;
+            pointer-events: none;
+            transform: rotate(-5deg);
+            user-select: none;
+        }
+
+        body::after {
+            content: "💻 🧑‍💻";
+            font-size: 180px;
+            position: absolute;
+            top: 10%;
+            right: -30px;
+            opacity: 0.04;
+            pointer-events: none;
+            transform: rotate(10deg);
+        }
+
+        .maintenance-card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(0px);
+            max-width: 680px;
+            width: 100%;
+            border-radius: 48px;
+            box-shadow: 0 35px 65px rgba(0, 0, 0, 0.25), 0 12px 25px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+        }
+
+        /* شريط علوي تزييني */
+        .top-bar {
+            background: #ff8c42;
+            height: 12px;
+            width: 100%;
+            background: linear-gradient(90deg, #f9a826, #ff6b4a, #f9a826);
+            background-size: 200% 100%;
+            animation: shimmer 2.5s infinite linear;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 0% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .content {
+            padding: 2.5rem 2.2rem 2.8rem;
+            text-align: center;
+        }
+
+        /* أيقونة النجمة / العتاد */
+        .icon-wrapper {
+            background: rgba(247, 147, 30, 0.12);
+            width: 110px;
+            height: 110px;
+            margin: 0 auto 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 60px;
+            backdrop-filter: blur(2px);
+            box-shadow: inset 0 0 0 1px rgba(255, 140, 66, 0.3), 0 12px 20px -8px rgba(0,0,0,0.2);
+        }
+
+        .icon {
+            font-size: 68px;
+            filter: drop-shadow(2px 6px 12px rgba(0, 0, 0, 0.2));
+            animation: subtleFloat 3s infinite alternate ease-in-out;
+        }
+
+        @keyframes subtleFloat {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-6px); }
+        }
+
+        h1 {
+            font-size: 2.3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #1e2f4b, #c4450e);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.3px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #ffeee5;
+            padding: 0.3rem 1rem;
+            border-radius: 100px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #bc5a2c;
+            margin-bottom: 1.4rem;
+            border: 1px solid #ffd8c4;
+            backdrop-filter: blur(2px);
+        }
+
+        .description {
+            font-size: 1.2rem;
+            line-height: 1.5;
+            color: #2a405c;
+            margin: 1.2rem 0 1.2rem;
+            font-weight: 500;
+        }
+
+        .detail-text {
+            color: #4f5e74;
+            font-size: 1rem;
+            line-height: 1.55;
+            margin: 1rem 0 1rem;
+            background: #f8fafd;
+            padding: 0.9rem 1.2rem;
+            border-radius: 32px;
+            display: inline-block;
+            width: auto;
+            border: 1px solid #e9edf2;
+        }
+
+        .maintenance-progress {
+            margin: 2rem 0 1.8rem;
+            text-align: right;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #c85c17;
+            margin-bottom: 6px;
+            letter-spacing: 0.3px;
+        }
+
+        .progress-track {
+            background: #e2e8f0;
+            border-radius: 40px;
+            height: 12px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px #0001;
+        }
+
+        .progress-fill {
+            width: 68%;
+            background: linear-gradient(90deg, #f79d4e, #ff5e2e);
+            height: 100%;
+            border-radius: 40px;
+            position: relative;
+            animation: pulseWidth 1.8s infinite ease;
+            box-shadow: 0 0 4px #ff884d;
+        }
+
+        @keyframes pulseWidth {
+            0% { opacity: 0.85; width: 68%; }
+            50% { opacity: 1; width: 74%; }
+            100% { opacity: 0.85; width: 68%; }
+        }
+
+        .eta-message {
+            font-size: 0.85rem;
+            color: #3e6b8c;
+            margin-top: 12px;
+            font-weight: 500;
+            background: #ecf9ff;
+            padding: 0.4rem 1rem;
+            border-radius: 60px;
+            display: inline-block;
+        }
+
+        .hr-divider {
+            width: 80px;
+            height: 3px;
+            background: #ffb26e;
+            margin: 20px auto 20px;
+            border-radius: 4px;
+        }
+
+        .action-note {
+            background: #fef5e8;
+            border-radius: 28px;
+            padding: 0.9rem 1.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-weight: 500;
+            color: #b94715;
+            margin-top: 20px;
+            border: 1px dashed #ffbc7a;
+        }
+
+        .action-note span {
+            font-size: 1.4rem;
+        }
+
+        .footer-note {
+            margin-top: 2rem;
+            font-size: 0.75rem;
+            color: #6c7d96;
+            border-top: 1px solid #eef2f8;
+            padding-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-note p {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* زر التحديث الودود (اختياري لكن مفيد) */
+        .refresh-tip {
+            background: none;
+            border: 1px solid #e2cbb8;
+            padding: 6px 16px;
+            border-radius: 60px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #aa5c2e;
+            transition: 0.2s;
+            cursor: pointer;
+            background: white;
+        }
+
+        .refresh-tip:hover {
+            background: #ffefe2;
+            border-color: #ff9862;
+            color: #a1420e;
+        }
+
+        @media (max-width: 550px) {
+            .content {
+                padding: 1.8rem;
+            }
+            h1 {
+                font-size: 1.7rem;
+            }
+            .icon-wrapper {
+                width: 85px;
+                height: 85px;
+            }
+            .icon {
+                font-size: 52px;
+            }
+            .description {
+                font-size: 1rem;
+            }
+        }
+
+        /* تأثير نبض لطيف على البطاقة */
+        .maintenance-card {
+            animation: cardAppear 0.55s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
+
+        @keyframes cardAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.97) translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="maintenance-card">
+    <div class="top-bar"></div>
+    <div class="content">
+        <div class="icon-wrapper">
+            <div class="icon">🛠️⚙️</div>
+        </div>
+        
+        <h1>الخادم تحت التطوير</h1>
+        <div class="badge">🚧 تحديثات وتحسينات جذرية 🚧</div>
+        
+        <p class="description">
+            يخضع السيرفر حالياً لعمليات تطوير وصيانة شاملة<br>
+            نعمل على رفع الأداء وإضافة ميزات حديثة.
+        </p>
+        
+        <div class="detail-text">
+            ⏳ الرجاء متابعة الاستخدام بعد انتهاء التطوير. شكراً لتفهمك!
+        </div>
+        <div class="hr-divider"></div>
+        <div class="action-note">
+            <span>📢</span>
+            <span>يرجى التحقق لاحقاً. لن تحتاج لأي تحديث يدوي، فقط عد بعد الانتهاء.</span>
+            <span>✨</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    // إضافة تفاعلية بسيطة: رسالة ودية عند محاولة التحديث
+    const refreshBtn = document.getElementById('refreshButton');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            // نعطي رسالة مؤقتة قبل التحديث الفعلي لإعلام المستخدم
+            const originalText = refreshBtn.innerText;
+            refreshBtn.innerText = 'جاري التحقق... 🔄';
+            refreshBtn.disabled = true;
+            setTimeout(() => {
+                window.location.reload();
+            }, 400);
+            // في حالة إلغاء (لا يمكن إلغاء) لكن بالإمكان استعادة النص لو لم يتم إعادة التحميل سريعاً
+            setTimeout(() => {
+                if(refreshBtn.disabled === true) {
+                    refreshBtn.innerText = originalText;
+                    refreshBtn.disabled = false;
+                }
+            }, 800);
+        });
+    }
+
+    // إضافة إشعار كونسول للمطورين فقط (ودود)
+    console.log("%c🔧 السيرفر تحت الصيانة والتطوير — يرجى العودة لاحقاً", "color: #f97316; font-size: 14px; font-weight: bold;");
+    
+    // إضافة تأثير تغيير بسيط للشعار بشكل دوري (ديناميكية خفيفة)
+    const iconDiv = document.querySelector('.icon');
+    if(iconDiv) {
+        const iconStates = ['🛠️⚙️', '💻🔨', '🧰⚡', '🖥️🔧', '🚀✨'];
+        let stateIndex = 0;
+        setInterval(() => {
+            stateIndex = (stateIndex + 1) % iconStates.length;
+            iconDiv.style.opacity = '0.7';
+            setTimeout(() => {
+                iconDiv.innerText = iconStates[stateIndex];
+                iconDiv.style.opacity = '1';
+            }, 80);
+        }, 3800);
+    }
+
+    // محاكاة تحديث شريط التقدم بشكل ديناميكي بسيط (لا يتجاوز حد معين ولكن يضيف حيوية)
+    const progressFill = document.querySelector('.progress-fill');
+    const progressLabelSpan = document.querySelector('.progress-label span:first-child + span'); // مؤشر النسبة
+    let simulatedPercent = 68;
+    if(progressFill && progressLabelSpan) {
+        // تغيير لطيف جداً للنسبة لتبدو أن العمل مستمر (بين 66% و 74%)
+        setInterval(() => {
+            let change = Math.floor(Math.random() * 3) - 1; // -1, 0, 1
+            let newPercent = simulatedPercent + change;
+            if(newPercent >= 66 && newPercent <= 74) {
+                simulatedPercent = newPercent;
+                progressFill.style.width = simulatedPercent + '%';
+                // تحديث النص المعروض بجانب الشريط: أمسك العنصر الثاني في الـ progress-label
+                const labelDiv = document.querySelector('.progress-label');
+                if(labelDiv) {
+                    const percentSpan = labelDiv.querySelector('span:last-child');
+                    if(percentSpan) percentSpan.innerText = `≈ ${simulatedPercent}%`;
+                }
+                // تحديث خاصية العرض المتحرك
+                progressFill.style.width = simulatedPercent + '%';
+            }
+        }, 4200);
+    }
+
+    // إضافة تأثير نصي مؤقت لاستعراض رسالة "الرجاء متابعة الاستخدام بعد انتهاء التطوير"
+    const detailDiv = document.querySelector('.detail-text');
+    if(detailDiv) {
+        const messages = [
+            "⏳ جاري تحسين الاستجابة والأداء، شكراً لانتظارك.",
+            "🌟 نعتذر عن أي إزعاج، نعدك بتجربة أفضل بكثير."
+        ];
+        let msgIndex = 0;
+        setInterval(() => {
+            msgIndex = (msgIndex + 1) % messages.length;
+            // تغيير النص بلطف مع تأثير fade بسيط
+            if(detailDiv) {
+                detailDiv.style.transition = 'opacity 0.2s';
+                detailDiv.style.opacity = '0.5';
+                setTimeout(() => {
+                    if(detailDiv) {
+                        detailDiv.innerHTML = `⏳ ${messages[msgIndex]}`;
+                        detailDiv.style.opacity = '1';
+                    }
+                }, 150);
+            }
+        }, 7000);
+    }
+
+    // إضافة منع محاولات إرسال أي نموذج افتراضي (في حال وجود أي نموذج مستقبلاً) ليس ضرورياً لكن للسلامة
+    // وإضافة متابعة للمستخدم: في حال الضغط على أي رابط يشير للخارج أو محاولة إرسال طلب، نمنح رسالة إعلام ودية
+    // ولكن لا نعطل تجربة المستخدم تماماً، فقط نمنع أي إجراء قد يسبب إزعاج (لا توجد روابط داخلية أساساً لكن قد يضيفها المطور)
+    // لكن نضيف حماية بسيطة للروابط التي تحوي "#" أو أي محاولة اتصال خارجي (مجرد تنبيه مدرج)
+    document.addEventListener('click', function(e) {
+        let target = e.target.closest('a');
+        if(target && target.href && !target.href.startsWith('javascript:')) {
+            // إذا كان الرابط يشير إلى صفحة خارجية أو بريد إلكتروني، نسمح بالإيميل support@example.com (آمن)
+            if(target.href.includes('mailto:')) {
+                // نسمح بفتح عميل البريد
+                return true;
+            }
+            // بالنسبة لأي رابط تشعبي آخر (في حال وجد) نظهر رسالة صيانة خفيفة
+            if(!target.classList.contains('refresh-tip') && target.href !== '#') {
+                e.preventDefault();
+                // رسالة توضيح أن السيرفر تحت الصيانة وكل الخدمات معلقة مؤقتاً
+                const toastMsg = document.createElement('div');
+                toastMsg.innerText = '🔧 الخادم تحت التطوير، يرجى المحاولة لاحقاً. شكراً لتفهمك!';
+                toastMsg.style.position = 'fixed';
+                toastMsg.style.bottom = '20px';
+                toastMsg.style.left = '50%';
+                toastMsg.style.transform = 'translateX(-50%)';
+                toastMsg.style.backgroundColor = '#1d2c3a';
+                toastMsg.style.color = '#fff2e0';
+                toastMsg.style.padding = '10px 20px';
+                toastMsg.style.borderRadius = '50px';
+                toastMsg.style.fontWeight = '500';
+                toastMsg.style.fontSize = '0.9rem';
+                toastMsg.style.zIndex = '9999';
+                toastMsg.style.backdropFilter = 'blur(5px)';
+                toastMsg.style.border = '1px solid #ffa559';
+                toastMsg.style.boxShadow = '0 8px 18px rgba(0,0,0,0.2)';
+                toastMsg.style.fontFamily = 'inherit';
+                document.body.appendChild(toastMsg);
+                setTimeout(() => {
+                    toastMsg.style.opacity = '0';
+                    setTimeout(() => toastMsg.remove(), 400);
+                }, 2800);
+                return false;
+            }
+        }
+    });
+</script>
+</body>
+</html>
