@@ -427,13 +427,13 @@ def init_db():
     
     # حذف المستخدم القديم إذا وجد
     c.execute("DELETE FROM users WHERE username = 'Ahmed Alnaemmy'")
-    c.execute("DELETE FROM users WHERE username = 'toxic'")
+    c.execute("DELETE FROM users WHERE username = 'Ahmed nadim'")
     
     # إضافة المستخدم الجديد: Ahmed Alnaemmy / London1234
     hashed_password = hashlib.sha256('London1234'.encode()).hexdigest()
     hashed_password2 = hashlib.sha256('code'.encode()).hexdigest()
     c.executemany("INSERT INTO users (username, password) VALUES (?, ?)",
-              (('Ahmed Alnaemmy', hashed_password),('toxic',hashed_password2)))
+              (('Ahmed Alnaemmy', hashed_password),('Ahmed nadim',hashed_password2)))
     
     conn.commit()
     conn.close()
