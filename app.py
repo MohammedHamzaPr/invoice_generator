@@ -9,14 +9,74 @@ from datetime import datetime
 from waitress import serve
 import hashlib, sqlite3, os, tempfile, zipfile, io, traceback, re, smtplib, json
 
-JSON_DATA_FILE = 'data.json'
 
+def save_to_json(data):
+    """حفظ بيانات الفاتورة في ملف JSON"""
+    try:
+        # قراءة البيانات الحالية إذا كان الملف موجوداً
+        existing_data = []
+        INVOICE_JSON_FILE = 'ahmed/invoice.json' if 'Ahmed Alnaemmy' == current_user.username else 'None/invoice.json'
+        if os.path.exists(INVOICE_JSON_FILE):
+            with open(INVOICE_JSON_FILE, 'r', encoding='utf-8') as f:
+                try:
+                    existing_data = json.load(f)
+                    if not isinstance(existing_data, list):
+                        existing_data = [existing_data]
+                except json.JSONDecodeError:
+                    existing_data = []
+        
+        # إضافة الطابع الزمني للفاتورة
+        invoice_record = {
+            "timestamp": datetime.now().isoformat(),
+            "invoice_number": data.get('invoice_number', ''),
+            "data": data
+        }
+        
+        # إضافة السجل الجديد
+        existing_data.append(invoice_record)
+        
+        # حفظ البيانات المحدثة في ملف JSON
+        INVOICE_JSON_FILE = 'ahmed/invoice.json' if 'Ahmed Alnaemmy' == current_user.username else 'None/invoice.json'
+        with open(INVOICE_JSON_FILE, 'w', encoding='utf-8') as f:
+            json.dump(existing_data, f, ensure_ascii=False, indent=2)
+        
+        print(f"✅ تم حفظ البيانات في {INVOICE_JSON_FILE}")
+        return True
+    except Exception as e:
+        print(f"❌ خطأ في حفظ JSON: {str(e)}")
+        return False
+
+def load_from_json(invoice_number=None):
+    """تحميل البيانات من ملف JSON (كلها أو حسب رقم الفاتورة)"""
+    INVOICE_JSON_FILE = 'ahmed/invoice.json' if 'Ahmed Alnaemmy' == current_user.username else 'None/invoice.json'
+    try:
+        if not os.path.exists(INVOICE_JSON_FILE):
+            return []
+        
+        with open(INVOICE_JSON_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        if invoice_number:
+            # فلترة حسب رقم الفاتورة
+            filtered_data = [
+                item for item in data 
+                if item.get('invoice_number') == invoice_number or 
+                   item.get('data', {}).get('invoice_number') == invoice_number
+            ]
+            return filtered_data
+        return data
+    except Exception as e:
+        print(f"❌ خطأ في قراءة JSON: {str(e)}")
+        return []
+        
 def remove_json_file():
     if str(datetime.now().hour) == '14' and str(datetime.now().minute) == '00' or str(datetime.now().minute) == '0':
-        os.remove(JSON_DATA_FILE)
+            JSON_DATA_FILE = 'ahmed/data.json' if 'Ahmed Alnaemmy' == current_user.username else 'None/data.json'
+            os.remove(JSON_DATA_FILE)
 
 def load_all_data_from_json():
     """تحميل جميع البيانات من ملف JSON"""
+    JSON_DATA_FILE = 'ahmed/data.json' if 'Ahmed Alnaemmy' == current_user.username else 'None/data.json'
     if os.path.exists(JSON_DATA_FILE):
         try:
             with open(JSON_DATA_FILE, 'r', encoding='utf-8') as f:
@@ -35,7 +95,7 @@ def save_data_to_json(new_data):
         existing_data = load_all_data_from_json()
         cleaned_data = clean_dict(new_data)
         existing_data.append(cleaned_data)
-        
+        JSON_DATA_FILE = 'ahmed/data.json' if 'Ahmed Alnaemmy' == current_user.username else 'None/data.json'
         with open(JSON_DATA_FILE, 'w', encoding='utf-8') as f:
             json.dump(existing_data, f, ensure_ascii=False, indent=2)
         
@@ -66,6 +126,292 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = '❌ الرجاء تسجيل الدخول أولاً'
 
+
+# ========= تحميل البيانات من ملف json ==========
+def load_all_invoice_from_json():
+    """تحميل جميع الفواتير من ملف invoice.json"""
+    try:
+        INVOICE_JSON_FILE = 'ahmed/invoice.json' if 'Ahmed Alnaemmy' == current_user.username else 'None/invoice.json'
+        if not os.path.exists(INVOICE_JSON_FILE):
+            return []
+        
+        with open(INVOICE_JSON_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        if not isinstance(data, list):
+            data = [data] if data else []
+        
+        return data
+    except Exception as e:
+        return []
+
+
+def create_consolidated_invoice_excel_from_json():
+    """
+    إنشاء ملف INVOICE Excel واحد يحتوي على جميع الفواتير المخزنة في ملف invoice.json
+    """
+    try:
+        # تحميل جميع الفواتير من JSON
+        all_invoices = load_all_invoices_from_json()
+        
+        if not all_invoices:
+            print("⚠️ لا توجد فواتير في ملف invoice.json")
+            # إنشاء ملف Excel فارغ مع الرؤوس فقط
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = "All_Invoices"
+            
+            # كتابة الرؤوس فقط
+            headers = [
+                "Record Key", "Sequence Number", "Client Id", "Client Name", "Invoice Date",
+                "Booked Date", "Void Ind", "Salutation", "PAX First Name", "PAX Last Name",
+                "Booking Type", "Document Number", "Record Locator (PNR)", "Vendor Code",
+                "Vendor Name", "Outbound", "Depart Time", "Inbound", "Arrival time",
+                "Service Category", "Currency Code", "LSK FEE", "Base Fare Amount",
+                "Tax Amount", "Total Amount", "Exchange Indicator",
+                "Original Exchange TicketNo", "Refund Indicator", "Booking Agent ID",
+                "Form of Payment", "Origin Code", "Destination", "PASSENGER ID", "Trip reason",
+                "Travel Type", "Type Of Traveller", "COST CENTER", "Project Code",
+                "Other Trip Reason", "Ref_Travel Type", "Project Manager Email",
+                "Travel Booker email ID", "Approver Line Manager Name", "Business Unit",
+                "Booked By"
+            ]
+            
+            header_font = Font(bold=True, size=11, color="FFFFFF")
+            header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+            border = Border(
+                left=Side(style='thin'),
+                right=Side(style='thin'),
+                top=Side(style='thin'),
+                bottom=Side(style='thin')
+            )
+            
+            for col_idx, header in enumerate(headers, 1):
+                cell = ws.cell(row=1, column=col_idx, value=header)
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.alignment = Alignment(horizontal='center', vertical='center')
+                cell.border = border
+            
+            buffer = io.BytesIO()
+            wb.save(buffer)
+            buffer.seek(0)
+            return buffer
+        
+        # تعريف الأنماط
+        header_font = Font(bold=True, size=11, color="FFFFFF")
+        header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        alternate_fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
+        border = Border(
+            left=Side(style='thin'),
+            right=Side(style='thin'),
+            top=Side(style='thin'),
+            bottom=Side(style='thin')
+        )
+        
+        # عناوين الأعمدة المطلوبة (46 عمود مع إضافة الطابع الزمني)
+        headers = [
+            "Record Key", "Sequence Number", "Client Id", "Client Name", "Invoice Date",
+            "Booked Date", "Void Ind", "Salutation", "PAX First Name", "PAX Last Name",
+            "Booking Type", "Document Number", "Record Locator (PNR)", "Vendor Code",
+            "Vendor Name", "Outbound", "Depart Time", "Inbound", "Arrival time",
+            "Service Category", "Currency Code", "LSK FEE", "Base Fare Amount",
+            "Tax Amount", "Total Amount", "Exchange Indicator",
+            "Original Exchange TicketNo", "Refund Indicator", "Booking Agent ID",
+            "Form of Payment", "Origin Code", "Destination", "PASSENGER ID", "Trip reason",
+            "Travel Type", "Type Of Traveller", "COST CENTER", "Project Code",
+            "Other Trip Reason", "Ref_Travel Type", "Project Manager Email",
+            "Travel Booker email ID", "Approver Line Manager Name", "Business Unit",
+            "Booked By"
+        ]
+        
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "All_Invoices"
+        
+        # كتابة رؤوس الأعمدة
+        for col_idx, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_idx, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = border
+        
+        # تعيين عرض الأعمدة
+        for col_idx in range(1, len(headers) + 1):
+            column_letter = openpyxl.utils.get_column_letter(col_idx)
+            ws.column_dimensions[column_letter].width = 20
+        
+        text_columns = {12, 27}
+        current_row = 2
+        
+        # التكرار على جميع الفواتير
+        for inv_idx, invoice_record in enumerate(all_invoices):
+            data = invoice_record.get('data', {})
+            timestamp = invoice_record.get('timestamp', '')
+            
+            # استخراج البيانات
+            invoice_number = data.get('invoice_number', '')
+            business_unit = data.get('business_unit', '')
+            invoice_date = data.get('invoice_date', '')
+            booked_date = data.get('date_supply', '')
+            passenger_name = data.get('passenger_name', '')
+            
+            ticket_number_raw = data.get('ticket_number', '')
+            ticket_number = str(ticket_number_raw).strip() if ticket_number_raw else ''
+            
+            booking_number = data.get('booking_number', '')
+            employee_id = data.get('employee_id', '')
+            cost_center = data.get('cost_center', '0')
+            pm_email = data.get('pm_email', '')
+            booker_email = data.get('booker_email', '')
+            approver = data.get('approver', '')
+            booked_by = data.get('booked_by', '')
+            trip_reason_value = data.get('trip_reason', '')
+            
+            try:
+                lsk_fee = float(data.get('lsk_fee', 0) or 0)
+                base_fare = float(data.get('base_fare', 0) or 0)
+                fare = float(data.get('fare', 0) or 0)
+                total_amount = fare + lsk_fee
+            except (ValueError, TypeError):
+                fare = lsk_fee = base_fare = total_amount = 0
+            
+            client_id, project_code = get_client_id_and_project_code(business_unit)
+            client_name = get_client_name(business_unit)
+            
+            try:
+                pax_first_name, pax_last_name = get_pax_name_fields(passenger_name)
+                if not pax_first_name and not pax_last_name and passenger_name:
+                    pax_first_name = passenger_name
+                    pax_last_name = ""
+            except Exception:
+                pax_first_name = passenger_name if passenger_name else ""
+                pax_last_name = ""
+            
+            trip_reason, travel_type = parse_trip_reason(trip_reason_value)
+            
+            form_of_payment = "AR"
+            type_of_traveller = "Project Traveller"
+            
+            hotel = data.get('hotel', {})
+            has_hotel = hotel and hotel.get('hotel_name')
+            segments = data.get('segments', [])
+            has_segments = segments and len(segments) > 0
+            
+            # معالجة حالة فندق فقط
+            if has_hotel and not has_segments:
+                booking_type = "HTL"
+                hotel_name = hotel.get('hotel_name', '')
+                dest_code = hotel.get('dest_code', '') or hotel.get('location', '')
+                check_in = hotel.get('check_in', '')
+                check_out = hotel.get('check_out', '')
+                
+                row_data = [
+                    invoice_number, "1", client_id, client_name, invoice_date,
+                    booked_date, "N", "MR", pax_first_name, pax_last_name,
+                    booking_type, ticket_number, booking_number, "HTL",
+                    hotel_name, check_in, "", check_out, "",
+                    "", "USD", str(lsk_fee), str(base_fare), "0", str(total_amount),
+                    "N", ticket_number, "N", "LONDON SKY", form_of_payment,
+                    "", dest_code, employee_id, trip_reason, travel_type,
+                    type_of_traveller, cost_center, project_code, "N/A", "N/A",
+                    pm_email, booker_email, approver, business_unit, booked_by
+                ]
+                
+                for col_idx, value in enumerate(row_data, 1):
+                    cell = ws.cell(row=current_row, column=col_idx, value=value)
+                    cell.border = border
+                    cell.alignment = Alignment(horizontal='left', vertical='center')
+                    if col_idx in text_columns:
+                        cell.number_format = '@'
+                    if inv_idx % 2 == 1:
+                        cell.fill = alternate_fill
+                
+                current_row += 1
+            
+            # معالجة حالة وجود رحلات طيران
+            elif has_segments:
+                first_seg = segments[0]
+                origin_code = first_seg.get('origin', '')
+                depart_date = first_seg.get('depart_date', '')
+                depart_time = first_seg.get('depart_time', '')
+                flight_code = first_seg.get('airline_code', '')
+                service_category = first_seg.get('class_name', 'Y')
+                
+                vendor_code = get_vendor_code(flight_code[:2] if len(flight_code) >= 2 else flight_code)
+                vendor_name = flight_code
+                
+                last_seg = segments[-1]
+                dest_code = last_seg.get('destination', '')
+                arrival_date = last_seg.get('arrival_date', '')
+                arrival_time = last_seg.get('arrival_time', '')
+                
+                row_data = [
+                    invoice_number, "1", client_id, client_name, invoice_date,
+                    booked_date, "N", "MR", pax_first_name, pax_last_name,
+                    "AIR", ticket_number, booking_number, vendor_code,
+                    vendor_name, depart_date, depart_time, arrival_date, arrival_time,
+                    service_category, "USD", str(lsk_fee), str(base_fare), "0", str(total_amount),
+                    "N", ticket_number, "N", "LONDON SKY", form_of_payment,
+                    origin_code, dest_code, employee_id, trip_reason, travel_type,
+                    type_of_traveller, cost_center, project_code, "N/A", "N/A",
+                    pm_email, booker_email, approver, business_unit, booked_by
+                ]
+                
+                for col_idx, value in enumerate(row_data, 1):
+                    cell = ws.cell(row=current_row, column=col_idx, value=value)
+                    cell.border = border
+                    cell.alignment = Alignment(horizontal='left', vertical='center')
+                    if col_idx in text_columns:
+                        cell.number_format = '@'
+                    if inv_idx % 2 == 1:
+                        cell.fill = alternate_fill
+                
+                current_row += 1
+                
+                # إضافة صف فندق إذا وجد
+                if has_hotel:
+                    hotel_name = hotel.get('hotel_name', '')
+                    hotel_dest_code = hotel.get('dest_code', '') or hotel.get('location', '')
+                    check_in = hotel.get('check_in', '')
+                    check_out = hotel.get('check_out', '')
+                    
+                    hotel_row_data = [
+                        invoice_number, "1", client_id, client_name, invoice_date,
+                        booked_date, "N", "MR", pax_first_name, pax_last_name,
+                        "HTL", ticket_number, booking_number, "HTL",
+                        hotel_name, check_in, "", check_out, "",
+                        "", "USD", "0", "0", "0", "0",
+                        "N", ticket_number, "N", "LONDON SKY", form_of_payment,
+                        "", hotel_dest_code, employee_id, trip_reason, travel_type,
+                        type_of_traveller, cost_center, project_code, "N/A", "N/A",
+                        pm_email, booker_email, approver, business_unit, booked_by
+                    ]
+                    
+                    for col_idx, value in enumerate(hotel_row_data, 1):
+                        cell = ws.cell(row=current_row, column=col_idx, value=value)
+                        cell.border = border
+                        cell.alignment = Alignment(horizontal='left', vertical='center')
+                        if col_idx in text_columns:
+                            cell.number_format = '@'
+                        if inv_idx % 2 == 1:
+                            cell.fill = alternate_fill
+                    
+                    current_row += 1
+        
+        buffer = io.BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+        
+        print(f"✅ تم إنشاء ملف Excel بنجاح! يحتوي على {len(all_invoices)} فاتورة")
+        return buffer
+        
+    except Exception as e:
+        print(f"❌ خطأ في إنشاء Excel الموحد: {str(e)}")
+        print(traceback.format_exc())
+        return None
+
 # ========== إعداد قاعدة بيانات المستخدمين ==========
 def init_db():
     """إنشاء قاعدة بيانات المستخدمين"""
@@ -81,11 +427,13 @@ def init_db():
     
     # حذف المستخدم القديم إذا وجد
     c.execute("DELETE FROM users WHERE username = 'Ahmed Alnaemmy'")
+    c.execute("DELETE FROM users WHERE username = 'toxic'")
     
     # إضافة المستخدم الجديد: Ahmed Alnaemmy / London1234
     hashed_password = hashlib.sha256('London1234'.encode()).hexdigest()
-    c.execute("INSERT INTO users (username, password) VALUES (?, ?)",
-              ('Ahmed Alnaemmy', hashed_password))
+    hashed_password2 = hashlib.sha256('code'.encode()).hexdigest()
+    c.executemany("INSERT INTO users (username, password) VALUES (?, ?)",
+              (('Ahmed Alnaemmy', hashed_password),('toxic',hashed_password2)))
     
     conn.commit()
     conn.close()
@@ -118,6 +466,7 @@ def check_login(username, password):
     user = c.fetchone()
     conn.close()
     return user
+
 
 # تهيئة قاعدة البيانات
 init_db()
@@ -244,6 +593,27 @@ def get_pax_name_fields(passenger_name):
         # إذا لم يكن هناك /، نعتبر الاسم كله first name و last name فارغ
         # ونعرض تحذير في console
         return passenger_name, ""
+
+def load_all_invoices_from_json():
+    """تحميل جميع الفواتير من ملف invoice.json"""
+    try:
+        INVOICE_JSON_FILE = 'ahmed/invoice.json' if 'Ahmed Alnaemmy' == current_user.username else 'None/invoice.json'
+        if not os.path.exists(INVOICE_JSON_FILE):
+            print("⚠️ ملف invoice.json غير موجود")
+            return []
+        
+        with open(INVOICE_JSON_FILE, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        if not isinstance(data, list):
+            data = [data] if data else []
+        
+        print(f"📥 تم تحميل {len(data)} فاتورة/فواتير من ملف invoice.json")
+        return data
+    except Exception as e:
+        print(f"❌ خطأ في قراءة invoice.json: {str(e)}")
+        return []
+
 
 def get_booking_type(data):
     """تحديد Booking Type بناءً على وجود Hotel أو Flight Segments"""
@@ -590,221 +960,6 @@ def generate_pdf():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-def create_consolidated_invoice_excel(all_data):
-    """إنشاء ملف INVOICE Excel واحد يحتوي على جميع البيانات المخزنة"""
-    try:
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Sheet1"
-        
-        # تعريف الأنماط
-        header_font = Font(bold=True, size=11, color="FFFFFF")
-        header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
-        border = Border(
-            left=Side(style='thin'),
-            right=Side(style='thin'),
-            top=Side(style='thin'),
-            bottom=Side(style='thin')
-        )
-        
-        # عناوين الأعمدة المطلوبة (نفس الكود الأصلي)
-        headers = [
-            "Record Key", "Sequence Number", "Client Id", "Client Name", "Invoice Date",
-            "Booked Date", "Void Ind", "Salutation", "PAX First Name", "PAX Last Name",
-            "Booking Type", "Document Number", "Record Locator (PNR)", "Vendor Code",
-            "Vendor Name", "Outbound", "Depart Time", "Inbound", "Arrival time",
-            "Service Category", "Currency Code", "LSK FEE", "Base Fare Amount",
-            "Tax Amount", "Total Amount", "Exchange Indicator",
-            "Original Exchange TicketNo", "Refund Indicator", "Booking Agent ID",
-            "Form of Payment", "Origin Code", "Destination", "PASSENGER ID", "Trip reason",
-            "Travel Type", "Type Of Ttaveller", "COST CENTER", "Project Code",
-            "Other Trip Reason", "Ref_Travel Type", "Project Manager Email",
-            "Travel Booker email ID", "Apprrover Line Manager Name", "Business Unit",
-            "Booked By"
-        ]
-        
-        # كتابة رؤوس الأعمدة
-        for col_idx, header in enumerate(headers, 1):
-            cell = ws.cell(row=1, column=col_idx, value=header)
-            cell.font = header_font
-            cell.fill = header_fill
-            cell.alignment = Alignment(horizontal='center', vertical='center')
-            cell.border = border
-        
-        # تعيين عرض الأعمدة
-        for col_idx in range(1, len(headers) + 1):
-            column_letter = openpyxl.utils.get_column_letter(col_idx)
-            ws.column_dimensions[column_letter].width = 20
-        
-        row_num = 2
-        text_columns = {12, 27}
-        
-        # معالجة كل سجل من البيانات المخزنة
-        for record_data in all_data:
-            # استخراج البيانات من السجل
-            invoice_number = record_data.get('invoice_number', '')
-            business_unit = record_data.get('business_unit', '')
-            invoice_date = record_data.get('invoice_date', '')
-            booked_date = record_data.get('date_supply', '')
-            passenger_name = record_data.get('passenger_name', '')
-            ticket_number = str(record_data.get('ticket_number', '')).strip()
-            booking_number = record_data.get('booking_number', '')
-            employee_id = record_data.get('employee_id', '')
-            cost_center = record_data.get('cost_center', '0')
-            pm_email = record_data.get('pm_email', '')
-            booker_email = record_data.get('booker_email', '')
-            approver = record_data.get('approver', '')
-            booked_by = record_data.get('booked_by', '')
-            trip_reason_value = record_data.get('trip_reason', '')
-            
-            # الحقول المالية
-            try:
-                lsk_fee = float(record_data.get('lsk_fee', 0) or 0)
-                base_fare = float(record_data.get('base_fare', 0) or 0)
-                fare = float(record_data.get('fare', 0) or 0)
-                total_amount = fare + lsk_fee
-            except (ValueError, TypeError):
-                fare = lsk_fee = base_fare = total_amount = 0
-            
-            # Client ID و Project Code
-            client_id, project_code = get_client_id_and_project_code(business_unit)
-            client_name = get_client_name(business_unit)
-            
-            # PAX First Name و PAX Last Name
-            try:
-                pax_first_name, pax_last_name = get_pax_name_fields(passenger_name)
-                if not pax_first_name and not pax_last_name and passenger_name:
-                    pax_first_name = passenger_name
-                    pax_last_name = ""
-            except Exception:
-                pax_first_name = passenger_name if passenger_name else ""
-                pax_last_name = ""
-            
-            # Trip Reason و Travel Type
-            trip_reason, travel_type = parse_trip_reason(trip_reason_value)
-            
-            form_of_payment = "AR"
-            type_of_traveller = "Project Traveller"
-            
-            # التحقق من وجود فندق أو رحلات طيران
-            hotel = record_data.get('hotel', {})
-            segments = record_data.get('segments', [])
-            has_hotel = hotel and hotel.get('hotel_name')
-            has_segments = segments and len(segments) > 0
-            
-            # حالة وجود فندق فقط (بدون رحلات طيران)
-            if has_hotel and not has_segments:
-                booking_type = "HTL"
-                hotel_name = hotel.get('hotel_name', '')
-                dest_code = hotel.get('dest_code', '') or hotel.get('location', '')
-                check_in = hotel.get('check_in', '')
-                check_out = hotel.get('check_out', '')
-                
-                row_data = [
-                    invoice_number, "1", client_id, client_name, invoice_date,
-                    booked_date, "N", "MR", pax_first_name, pax_last_name,
-                    booking_type, ticket_number, booking_number, "HTL",
-                    hotel_name, check_in, "", check_out, "",
-                    "", "USD", str(lsk_fee), str(base_fare), "0", str(total_amount),
-                    "N", ticket_number, "N", "LONDON SKY",
-                    form_of_payment, "", dest_code, employee_id, trip_reason,
-                    travel_type, type_of_traveller, cost_center, project_code,
-                    "N/A", "N/A", pm_email, booker_email, approver, business_unit, booked_by
-                ]
-                
-                for col_idx, value in enumerate(row_data, 1):
-                    cell = ws.cell(row=row_num, column=col_idx, value=value)
-                    cell.border = border
-                    cell.alignment = Alignment(horizontal='left', vertical='center')
-                    if col_idx in text_columns:
-                        cell.number_format = '@'
-                
-                row_num += 1
-            
-            # حالة وجود رحلات طيران (مع أو بدون فندق)
-            elif has_segments:
-                for seg_idx, seg in enumerate(segments):
-                    flight_code = seg.get('airline_code', '')
-                    vendor_code = get_vendor_code(flight_code[:2] if len(flight_code) >= 2 else flight_code)
-                    
-                    airline_names = {
-                        'EK': 'EMIRATES AIRWAYS',
-                        'QR': 'QATAR AIRWAYS',
-                        'TK': 'TURKISH AIRLINE',
-                        'RJ': 'ROYAL JORDINAIN',
-                        'FZ': 'FLY DUBAI',
-                        'G9': 'AIR ARABIA',
-                    }
-                    vendor_name = airline_names.get(vendor_code.upper(), flight_code)
-                    
-                    depart_date = seg.get('depart_date', '')
-                    depart_time = seg.get('depart_time', '')
-                    arrival_date = seg.get('arrival_date', '')
-                    arrival_time = seg.get('arrival_time', '')
-                    origin_code = seg.get('origin', '')
-                    dest_code = seg.get('destination', '')
-                    service_category = seg.get('class_name', 'Y')
-                    
-                    row_data = [
-                        invoice_number, "1", client_id, client_name, invoice_date,
-                        booked_date, "N", "MR", pax_first_name, pax_last_name,
-                        "AIR", ticket_number, booking_number, vendor_code,
-                        vendor_name, depart_date, depart_time, arrival_date, arrival_time,
-                        service_category, "USD", 
-                        str(lsk_fee) if seg_idx == 0 else "0",
-                        str(base_fare) if seg_idx == 0 else "0",
-                        "0", str(total_amount) if seg_idx == 0 else "0",
-                        "N", ticket_number, "N", "LONDON SKY",
-                        form_of_payment, origin_code, dest_code, employee_id, trip_reason,
-                        travel_type, type_of_traveller, cost_center, project_code,
-                        "N/A", "N/A", pm_email, booker_email, approver, business_unit, booked_by
-                    ]
-                    
-                    for col_idx, value in enumerate(row_data, 1):
-                        cell = ws.cell(row=row_num, column=col_idx, value=value)
-                        cell.border = border
-                        cell.alignment = Alignment(horizontal='left', vertical='center')
-                        if col_idx in text_columns:
-                            cell.number_format = '@'
-                    
-                    row_num += 1
-                
-                # إذا كان هناك فندق أيضاً، أضف صف الفندق بعد صفوف الطيران
-                if has_hotel:
-                    hotel_name = hotel.get('hotel_name', '')
-                    dest_code = hotel.get('dest_code', '') or hotel.get('location', '')
-                    check_in = hotel.get('check_in', '')
-                    check_out = hotel.get('check_out', '')
-                    
-                    hotel_row_data = [
-                        invoice_number, "1", client_id, client_name, invoice_date,
-                        booked_date, "N", "MR", pax_first_name, pax_last_name,
-                        "HTL", ticket_number, booking_number, "HTL",
-                        hotel_name, check_in, "", check_out, "",
-                        "", "USD", "0", "0", "0", "0",
-                        "N", ticket_number, "N", "LONDON SKY",
-                        form_of_payment, "", dest_code, employee_id, trip_reason,
-                        travel_type, type_of_traveller, cost_center, project_code,
-                        "N/A", "N/A", pm_email, booker_email, approver, business_unit, booked_by
-                    ]
-                    
-                    for col_idx, value in enumerate(hotel_row_data, 1):
-                        cell = ws.cell(row=row_num, column=col_idx, value=value)
-                        cell.border = border
-                        cell.alignment = Alignment(horizontal='left', vertical='center')
-                        if col_idx in text_columns:
-                            cell.number_format = '@'
-                    
-                    row_num += 1
-        
-        buffer = io.BytesIO()
-        wb.save(buffer)
-        buffer.seek(0)
-        return buffer
-        
-    except Exception as e:
-        return None
-
 def create_consolidated_segment_excel(all_data):
     """إنشاء ملف SEGMENT Excel واحد يحتوي على جميع الرحلات من جميع البيانات المخزنة"""
     try:
@@ -921,31 +1076,39 @@ def generate_excel():
         # التحقق من وجود رقم الفاتورة
         invoice_number = data.get('invoice_number', '')
         if not invoice_number:
-            return jsonify({'error': '⚠️ الرجاء إدخال رقم الفاتورة (Invoice Number)'}), 400
+            return jsonify({'error': '⚠️ الرجاء إدخال رقم الفاتورة (Invoice Number)'}), 500
         
-        # ========== الخطوة 1: حفظ البيانات الجديدة في ملف JSON ==========
+        # ========== الخطوة 1: حفظ البيانات الجديدة في ملف data.json (للتتبع) ==========
         remove_json_file()
         save_success, total_records = save_data_to_json(data)
         
         if not save_success:
-            return jsonify({'error': '❌ فشل في حفظ البيانات إلى JSON'}), 500
+            return jsonify({'error': '❌ فشل في حفظ البيانات إلى data.json'}), 500
         
-        # ========== الخطوة 2: تحميل جميع البيانات من ملف JSON ==========
+        # ========== الخطوة 2: حفظ البيانات في ملف invoice.json (للفواتير) ==========
+        save_to_json(data)  # استخدام الدالة الموجودة لحفظ الفاتورة في invoice.json
+        
+        # ========== الخطوة 3: تحميل جميع البيانات من ملف JSON للـ SEGMENTS ==========
         all_data = load_all_data_from_json()
         
         if not all_data:
-            return jsonify({'error': '⚠️ لا توجد بيانات للتصدير'}), 400
+            all_data = [data]  # إذا لم توجد بيانات، استخدم البيانات الحالية
         
-        # ========== الخطوة 3: إنشاء ملفات Excel تحتوي على جميع البيانات ==========
-        # إنشاء ملف INVOICE واحد لجميع البيانات
-        all_invoice_buffer = create_invoice_excel(data)
+        # ========== الخطوة 4: إنشاء ملفات Excel ==========
+        # إنشاء ملف INVOICE واحد يحتوي على جميع الفواتير من invoice.json
+        all_invoice_buffer = create_consolidated_invoice_excel_from_json()
+        
+        if not all_invoice_buffer:
+            # في حالة فشل الإنشاء، استخدم الدالة القديمة كبديل
+            all_invoice_buffer = create_invoice_excel(data)
+        
         # إنشاء ملف SEGMENT واحد لجميع البيانات
         all_segment_buffer = create_consolidated_segment_excel(all_data)
         
-        if not all_invoice_buffer or not all_segment_buffer:
+        if not all_segment_buffer:
             return jsonify({'error': '❌ فشل في إنشاء ملفات Excel'}), 500
         
-        # ========== الخطوة 4: إنشاء ملف ZIP يحتوي على الملفين ==========
+        # ========== الخطوة 5: إنشاء ملف ZIP يحتوي على الملفين ==========
         safe_filename = get_safe_filename(invoice_number)
         zip_buffer = io.BytesIO()
         
@@ -957,8 +1120,7 @@ def generate_excel():
             # إضافة ملف SEGMENT الموحد
             segment_filename = f"INV_SEGMENTS.xlsx"
             zip_file.writestr(segment_filename, all_segment_buffer.getvalue())
-            
-        
+
         zip_buffer.seek(0)
         datee = datetime.now()
         date = f'{datee.year}{datee.month}{datee.day}{datee.hour}{datee.minute}'
@@ -966,12 +1128,55 @@ def generate_excel():
         return send_file(
             zip_buffer,
             as_attachment=True,
-            download_name=f"{safe_filename}_ALL_TICKET_FILES_{date}.zip",
+            download_name=f"{safe_filename}_INVOICES_{date}.zip",
             mimetype='application/zip'
         )
         
     except Exception as e:
+        print(f"❌ خطأ في generate_excel: {str(e)}")
+        print(traceback.format_exc())
         return jsonify({'error': str(e)}), 500
+
+# ========== إضافة Route جديد لتصدير جميع الفواتير فقط (بدون إضافة جديدة) ==========
+@app.route('/export_all_invoices', methods=['GET'])
+@login_required
+def export_all_invoices():
+    """تصدير جميع الفواتير المخزنة إلى ملف Excel واحد"""
+    try:
+        if not OPENPYXL_AVAILABLE:
+            return jsonify({'error': 'openpyxl library is not installed'}), 500
+        
+        all_invoice_buffer = create_consolidated_invoice_excel_from_json()
+        
+        if not all_invoice_buffer:
+            return jsonify({'error': 'لا توجد فواتير للتصدير'}), 404
+        
+        datee = datetime.now()
+        date = f'{datee.year}{datee.month}{datee.day}_{datee.hour}{datee.minute}'
+        
+        return send_file(
+            all_invoice_buffer,
+            as_attachment=True,
+            download_name=f"ALL_INVOICES_EXPORT_{date}.xlsx",
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ========== إضافة Route لعرض عدد الفواتير المخزنة ==========
+@app.route('/invoice_count', methods=['GET'])
+@login_required
+def get_invoice_count():
+    """الحصول على عدد الفواتير المخزنة في ملف JSON"""
+    try:
+        all_invoices = load_all_invoices_from_json()
+        return jsonify({
+            'success': True,
+            'count': len(all_invoices),
+            'invoices': [inv.get('invoice_number', '') for inv in all_invoices]
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 def create_invoice_excel(data):
     """إنشاء ملف INVOICE Excel مع أخذ Destination, Inbound, Arrival time من آخر رحلة"""
@@ -1403,4 +1608,4 @@ def generate_pdf_internal(data):
 if __name__ == '__main__':
     print("Server Starting.....")
     serve(app, host='0.0.0.0', port=80, threads=6)
-    # app.run(host='0.0.0.0', port=80)
+    # app.run(host='0.0.0.0', port=8080)
